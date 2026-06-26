@@ -40,13 +40,19 @@ public class VipSystemExpansion extends PlaceholderExpansion {
         Player player = offlinePlayer.getPlayer();
         VipData vipData = VipSystemAPI.getInstance().getVipManager().getVipData(player);
         if (params.equalsIgnoreCase("vip")) {
-            return vipData != null ? vipData.getVip() : "-";
+            return vipData != null ? vipData.getVip() : "";
         } else if (params.equalsIgnoreCase("previous")) {
-            return vipData != null ? vipData.getPrevious() : "-";
+            return vipData != null ? vipData.getPrevious() : "";
         } else if (params.equalsIgnoreCase("expire")) {
-            return vipData != null ? vipData.getDuration() != -1 ? vipData.getExpireDate() : "∞" : "-";
+            return vipData != null ? vipData.getDuration() != -1 ? vipData.getExpireDate() : "永久" : "未开通";
         } else if (params.equalsIgnoreCase("left")) {
-            return vipData != null ? vipData.getDuration() != -1 ? String.valueOf(vipData.getLeftDays()) : "∞" : "-";
+            return vipData != null ? vipData.getDuration() != -1 ? String.valueOf(vipData.getLeftDays()) : "永久" : "未开通";
+        } else if (params.equalsIgnoreCase("format")) {
+            return vipData != null ? ("vip".equals(vipData.getVip())?
+                                      "&aVIP":"vip+".equals(vipData.getVip())?
+                                                "&a&lVIP+":"svip".equals(vipData.getVip())?
+                                                             "&e&lSVIP":"svip+".equals(vipData.getVip())?
+                                                                          "&6&lSVIP+":vipData.getVip()):"&7无";
         }
         return null;
     }
