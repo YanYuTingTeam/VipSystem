@@ -18,6 +18,7 @@ import net.milkbowl.vault.permission.Permission;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitRunnable;
 
 public final class Main extends JavaPlugin {
     private static Main instance;
@@ -96,7 +97,6 @@ public final class Main extends JavaPlugin {
         configManager = new ConfigManager();
         MessageManager.init();
         updateManager = new UpdateManager();
-        updateManager.checkUpdate();
         database = new Database();
         if (!database.isAvailable()) {
             Bukkit.getConsoleSender().sendMessage(MessageManager.getString("fatalError"));
@@ -119,7 +119,12 @@ public final class Main extends JavaPlugin {
             new VipSystemExpansion().register();
         }
         new CheckAllTask().runTaskTimerAsynchronously(instance, 0L, 20 * 60L);
-        VipSystemAPI.getInstance().getOnlinePlayers().forEach(player -> cache.cache(player));
+        VipSystemAPI.getInstance().getOnlinePlayers().forEach(player -> new BukkitRunnable() {
+            @Override
+            public void run() {
+                cache.cache(player);
+            }
+        }.runTaskAsynchronously(instance));
     }
 
     @Override
@@ -158,7 +163,12 @@ public final class Main extends JavaPlugin {
         scriptManager = new ScriptManager();
         customManager = new CustomManager();
         new CheckAllTask().runTaskTimerAsynchronously(instance, 0L, 20 * 60L);
-        VipSystemAPI.getInstance().getOnlinePlayers().forEach(player -> cache.cache(player));
+        VipSystemAPI.getInstance().getOnlinePlayers().forEach(player -> new BukkitRunnable() {
+            @Override
+            public void run() {
+                cache.cache(player);
+            }
+        }.runTaskAsynchronously(instance));
     }
 
     private static int minecraftVersion = 0;

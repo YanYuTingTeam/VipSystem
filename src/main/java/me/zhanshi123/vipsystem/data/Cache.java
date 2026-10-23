@@ -15,9 +15,10 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Cache implements Listener {
-    private final Map<String, VipData> map = new HashMap<>();
+    private final Map<String, VipData> map = new ConcurrentHashMap<>();
 
     public Cache() {
         Bukkit.getPluginManager().registerEvents(this, Main.getInstance());
@@ -38,10 +39,14 @@ public class Cache implements Listener {
     @EventHandler
     public void onQuit(PlayerQuitEvent e) {
         Player player = e.getPlayer();
-        deCache(player);
+        deCache(player, true);
     }
 
     public void cache(Player player) {
+        if (!player.isOnline()) {
+            Main.getInstance().debug("Player " + player.getName() + " is offline, skipping cache");
+            return;
+        }
         Main.getInstance().debug("Attempting to download player " + player.getName() + "'s data from database");
         VipData vipData = Main.getDataBase().getVipData(VipSystemAPI.getInstance().getPlayerName(player));
         if (vipData == null) {
@@ -71,6 +76,10 @@ public class Cache implements Listener {
     }
 
     public void deCache(Player player) {
+        deCache(player, false);
+    }
+
+    public void deCache(Player player, boolean async) {
         String name = VipSystemAPI.getInstance().getPlayerName(player);
         Main.getInstance().debug("Attempting to deCache player " + player.getName() + "'s data as " + name);
         VipData vipData = getVipData(name);
@@ -79,9 +88,22 @@ public class Cache implements Listener {
             return;
         }
         map.remove(name);
-        Main.getDataBase().updateVipData(vipData);
+        if (async) {
+            updateVipDataAsync(vipData);
+        } else {
+            Main.getDataBase().updateVipData(vipData);
+        }
         Main.getInstance().debug("Player " + player.getName() + "'s cached data removed and updated in database");
         Main.getInstance().debug("New data: " + vipData);
+    }
+
+    private void updateVipDataAsync(VipData vipData) {
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                Main.getDataBase().updateVipData(vipData);
+            }
+        }.runTaskAsynchronously(Main.getInstance());
     }
 
     public void addVipData(String playerName, VipData vipData) {
@@ -90,6 +112,6 @@ public class Cache implements Listener {
     }
 
     public Map<String, VipData> getCachedData() {
-        return map;
+        return new HashMap<>(map);
     }
 }

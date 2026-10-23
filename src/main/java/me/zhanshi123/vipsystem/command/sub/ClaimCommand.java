@@ -1,5 +1,6 @@
 package me.zhanshi123.vipsystem.command.sub;
 
+import me.zhanshi123.vipsystem.Main;
 import me.zhanshi123.vipsystem.api.VipSystemAPI;
 import me.zhanshi123.vipsystem.api.storage.VipStorage;
 import me.zhanshi123.vipsystem.api.vip.VipData;
@@ -8,6 +9,7 @@ import me.zhanshi123.vipsystem.manager.MessageManager;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.scheduler.BukkitRunnable;
 
 public class ClaimCommand extends SubCommand {
     public ClaimCommand() {
@@ -25,16 +27,29 @@ public class ClaimCommand extends SubCommand {
         }
         Player player = (Player) sender;
         int id = Integer.parseInt(args[1]);
-        VipStorage vipStorage = VipSystemAPI.getInstance().getVipStorageManager().getVipStorage(id);
-        if (vipStorage == null) {
-            return true;
-        }
-        if (!vipStorage.getPlayer().equalsIgnoreCase(VipSystemAPI.getInstance().getPlayerName(player))) {
-            return true;
-        }
-        VipSystemAPI.getInstance().getVipStorageManager().store(player);
-        VipSystemAPI.getInstance().getVipManager().addVipWithoutCommands(player, new VipData(VipSystemAPI.getInstance().getPlayerName(player), vipStorage.getVip(), vipStorage.getPrevious(), vipStorage.getLast()));
-        VipSystemAPI.getInstance().getVipStorageManager().removeVipStorage(id);
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                VipStorage vipStorage = VipSystemAPI.getInstance().getVipStorageManager().getVipStorage(id);
+                new BukkitRunnable() {
+                    @Override
+                    public void run() {
+                        if (!player.isOnline()) {
+                            return;
+                        }
+                        if (vipStorage == null) {
+                            return;
+                        }
+                        if (!vipStorage.getPlayer().equalsIgnoreCase(VipSystemAPI.getInstance().getPlayerName(player))) {
+                            return;
+                        }
+                        VipSystemAPI.getInstance().getVipStorageManager().store(player);
+                        VipSystemAPI.getInstance().getVipManager().addVipWithoutCommands(player, new VipData(VipSystemAPI.getInstance().getPlayerName(player), vipStorage.getVip(), vipStorage.getPrevious(), vipStorage.getLast()));
+                        VipSystemAPI.getInstance().getVipStorageManager().removeVipStorage(id);
+                    }
+                }.runTask(Main.getInstance());
+            }
+        }.runTaskAsynchronously(Main.getInstance());
         return true;
     }
 }
