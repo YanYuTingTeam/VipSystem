@@ -234,7 +234,7 @@ public class Database {
         handler.release();
     }
 
-    public void updateVipData(VipData data) {
+    public synchronized void updateVipData(VipData data) {
         checkConnection();
         if (getVipData(data.getPlayer()) == null) {
             insertVipData(data);
@@ -252,7 +252,7 @@ public class Database {
         }
     }
 
-    public void insertVipData(VipData data) {
+    public synchronized void insertVipData(VipData data) {
         checkConnection();
         try {
             insertPlayer.setString(1, data.getPlayer());
@@ -266,7 +266,7 @@ public class Database {
         }
     }
 
-    public void deletePlayer(String player) {
+    public synchronized void deletePlayer(String player) {
         checkConnection();
         try {
             deletePlayer.setString(1, player);
@@ -276,7 +276,7 @@ public class Database {
         }
     }
 
-    public VipData getVipData(String player) {
+    public synchronized VipData getVipData(String player) {
         checkConnection();
         VipData data = null;
         try {
@@ -291,7 +291,17 @@ public class Database {
         return data;
     }
 
-    public Set<VipData> getVipDatum() {
+    public synchronized java.util.Optional<VipData> tryGetVipData(String player) throws SQLException {
+        checkConnection();
+        getPlayer.setString(1, player);
+        ResultSet resultSet = getPlayer.executeQuery();
+        if (resultSet.next()) {
+            return java.util.Optional.of(new VipData(player, resultSet.getString("vip"), resultSet.getString("previous"), resultSet.getLong("start"), resultSet.getLong("duration")));
+        }
+        return java.util.Optional.empty();
+    }
+
+    public synchronized Set<VipData> getVipDatum() {
         checkConnection();
         Set<VipData> dataSet = new HashSet<>();
         try {
@@ -305,7 +315,7 @@ public class Database {
         return dataSet;
     }
 
-    public Set<VipStorage> getVipStorage(String name) {
+    public synchronized Set<VipStorage> getVipStorage(String name) {
         checkConnection();
         Set<VipStorage> set = new HashSet<>();
         try {
@@ -322,7 +332,7 @@ public class Database {
         return set;
     }
 
-    public void addVipStorage(VipStorage vipStorage) {
+    public synchronized void addVipStorage(VipStorage vipStorage) {
         checkConnection();
         try {
             insertStorage.setString(1, vipStorage.getPlayer());
@@ -336,7 +346,7 @@ public class Database {
         }
     }
 
-    public VipStorage getVipStorage(int id) {
+    public synchronized VipStorage getVipStorage(int id) {
         checkConnection();
         VipStorage vipStorage = null;
         try {
@@ -358,7 +368,7 @@ public class Database {
         return null;
     }
 
-    public void removeVipStorage(int id) {
+    public synchronized void removeVipStorage(int id) {
         checkConnection();
         try {
             removeStorage.setInt(1, id);
@@ -378,7 +388,7 @@ public class Database {
                 );
     }
 
-    public void addCustomFunction(StoredFunction customFunction, String args) {
+    public synchronized void addCustomFunction(StoredFunction customFunction, String args) {
         checkConnection();
         try {
             insertFunction.setString(1, customFunction.getName());
@@ -391,7 +401,7 @@ public class Database {
         }
     }
 
-    public void removeFunction(int id) {
+    public synchronized void removeFunction(int id) {
         checkConnection();
         try {
             removeFunction.setInt(1, id);
@@ -401,7 +411,7 @@ public class Database {
         }
     }
 
-    public List<StoredFunction> getAllFunctions() {
+    public synchronized List<StoredFunction> getAllFunctions() {
         checkConnection();
         List<StoredFunction> functions = new ArrayList<>();
         try {

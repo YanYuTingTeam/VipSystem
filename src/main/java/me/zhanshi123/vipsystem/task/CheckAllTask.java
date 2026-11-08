@@ -10,7 +10,12 @@ public class CheckAllTask extends BukkitRunnable {
     @Override
     public void run() {
         VipSystemAPI.getInstance().getOnlinePlayers()
-                .forEach(player -> new CheckVipTask(player).runTask(Main.getInstance()));
+                .forEach(player -> {
+                    if (Main.getCache().getVipData(VipSystemAPI.getInstance().getPlayerName(player)) == null) {
+                        Main.getCache().cache(player);
+                    }
+                    new CheckVipTask(player).runTask(Main.getInstance());
+                });
         Main.getDataBase().getAllFunctions().forEach(
                 storedFunction -> new CheckFunctionTask(storedFunction).runTask(Main.getInstance())
         );
